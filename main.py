@@ -21,7 +21,8 @@ class Main:
         Test
         """
         self.logger.info("Testing the API Client")
-        self.client.get_request("Jira", "rest/api/2/issue", {"key": "TEST-123"})
+        self.client.get_request("Jira", "rest/api/2/issue", 
+                               params={"jql": "project=TEST", "maxResults": 10})
 
 
 
