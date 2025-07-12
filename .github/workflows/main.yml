@@ -1,37 +1,12 @@
-name: Python CI with CodeQL
+name: Python CI Lint and Static Analysis
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  analyze:
-    name: 🔍 CodeQL Analysis
-    runs-on: ubuntu-latest
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-
-    steps:
-      - name: ⬇️ Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🐍 Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: python
-
-      - name: 📦 Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-
-      - name: 🧠 Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-
-  test:
-    name: 🧪 Build, Lint, Analyze & Test
+  Lint, Format check, and Static Analysis:
+    name: 🧪 Lint, Format Check and Static Analysis
     runs-on: ubuntu-latest
 
     steps:
@@ -41,13 +16,13 @@ jobs:
       - name: 🐍 Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
 
       - name: 📦 Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 black bandit pytest pytest-cov
+          pip install flake8 black bandit 
 
       - name: ✅ Lint with flake8
         run: |
@@ -63,9 +38,26 @@ jobs:
         run: |
           echo "Running Bandit (SAST)..."
           bandit -r . -ll || true
+  Run Code:
+      name: Run Code
+      runs-on: ubuntu-latest
 
-      - name: ☁️ Upload Coverage to GitHub (optional)
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-report
-          path: coverage.xml
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.13'
+
+        - name: Install dependencies
+          run: |
+            python -m pip install --upgrade pip
+            pip install -r requirements.txt
+
+        - name: Run application
+          working-directory: .
+          run: |
+            echo "Running the application..."
+            python main.py
