@@ -28,7 +28,7 @@ class APIClient:
         self.logger.info("APIClient initialized with JIRA credentials.")
 
     def send_request(self, request_to, endpoint, method,
-                     data=None, files=None, params=None):
+                     data=None):
         """
         Sends an HTTP request to the specified API.
 
@@ -58,9 +58,9 @@ class APIClient:
             response = None
             method = method.lower()
             if method == "get":
-                response = requests.get(url, headers=headers, params=params, timeout=10)
+                response = requests.get(url, headers=headers, timeout=10)
             elif method == "post":
-                response = requests.post(url, headers=headers, json=data, files=files, timeout=10)
+                response = requests.post(url, headers=headers, json=data, timeout=10)
             elif method == "put":
                 response = requests.put(url, headers=headers, json=data, timeout=10)
             elif method == "delete":
