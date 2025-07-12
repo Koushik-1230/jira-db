@@ -1,6 +1,6 @@
-from modules import logger, api_client
-
 import requests
+
+from modules import api_client, logger
 
 username = "admin"
 password = "supersecret123"

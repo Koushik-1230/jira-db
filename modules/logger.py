@@ -1,7 +1,7 @@
-import os
-import logging
-from datetime import datetime
 import glob
+import logging
+import os
+from datetime import datetime
 
 
 class Logger:
