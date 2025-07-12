@@ -27,6 +27,7 @@ class Main:
             self.logger.info(f"Fetched {len(issues)} issues from Jira.")
         else:
             self.logger.warning("No issues found in Jira.")
+        
 
 
 

@@ -5,6 +5,8 @@ import base64
 from datetime import datetime
 import os
 import time
+from dotenv import load_dotenv
+load_dotenv()
 
 import requests
 
@@ -52,7 +54,7 @@ class APIClient:
         params = kwargs.get("params", {})
         self.logger.info(f"GET request to {request_to} at {endpoint} with params: {params}")
         if request_to.lower() == "jira":
-            url = f"{self.jira_url}/{endpoint}"
+            url = f"{self.jira_url}{endpoint}"
             headers = self.jira_headers
         else:
             raise ValueError("Unsupported request_to value. Only 'jira' is supported.")
