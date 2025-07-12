@@ -11,6 +11,8 @@ on:
 jobs:
   run-jira-app:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     
     env:
       JIRA_BASE_URL: ${{ secrets.JIRA_URL }}
