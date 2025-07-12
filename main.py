@@ -1,6 +1,7 @@
 """This module initializes and starts the Jira API client."""
 
 from utils import api_client, logger
+from modules import JiraDB
 
 
 class Main:
@@ -13,6 +14,7 @@ class Main:
         """Initialize the Main class."""
         self.logger = logger.Logger()
         self.client = api_client.APIClient(self.logger)
+        self.jira_db = JiraDB(self.logger)
         self.logger.info("Jira API client initialized successfully.")
 
     
@@ -21,8 +23,11 @@ class Main:
         Test
         """
         self.logger.info("Testing the API Client")
-        self.client.get_request("Jira", "rest/api/2/issue", 
-                               params={"jql": "project=TEST", "maxResults": 10})
+        issues = self.jira_db.fetch_issues()
+        if issues:
+            self.logger.info(f"Fetched {len(issues)} issues from Jira.")
+        else:
+            self.logger.warning("No issues found in Jira.")
 
 
 

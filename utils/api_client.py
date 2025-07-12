@@ -25,6 +25,7 @@ class APIClient:
         self.jira_url = os.getenv("JIRA_BASE_URL")
         self.jira_email = os.getenv("JIRA_EMAIL")
         self.jira_token = os.getenv("JIRA_API_TOKEN")
+        self.default_timeout = 10
         self.jira_headers = {
             "Content-Type": "application/json",
             "Authorization": f"Basic {base64.b64encode(f"{self.jira_email}:{self.jira_token}".encode()).decode()}",
@@ -32,22 +33,6 @@ class APIClient:
         if not self.jira_url or not self.jira_email or not self.jira_token:
             raise ValueError("JIRA_URL, JIRA_EMAIL, and JIRA_TOKEN environment variables must be set.")
         self.logger.info(f"API Client initialized with JIRA URL: {self.jira_url}")
-    
-    def make_request(self, request_to, endpoint):
-        """
-        Make an HTTP request with retry logic.
-        
-        Args:
-            method (str): HTTP method (GET, POST, etc.).
-            endpoint (str): API endpoint to call.
-            *args: Positional arguments for the request.
-            **kwargs: Keyword arguments for the request.
-        
-        Returns:
-            Response object from the requests library.
-        """
-        self.logger.info("Making request to %s with args: %s, kwargs: %s", request_to, endpoint)
-
     
     def get_request(self, *args ,**kwargs):
         """
@@ -60,10 +45,31 @@ class APIClient:
         Returns:
             Response object from the requests library.
         """
+        url = None
+        headers = None
         request_to = list(args)[0]
         endpoint = list(args)[1]
         params = kwargs.get("params", {})
         self.logger.info(f"GET request to {request_to} at {endpoint} with params: {params}")
+        if request_to.lower() == "jira":
+            url = f"{self.jira_url}/{endpoint}"
+            headers = self.jira_headers
+        else:
+            raise ValueError("Unsupported request_to value. Only 'jira' is supported.")
+        
+        try:
+            response = requests.get(url, headers=headers, params=params, timeout=self.default_timeout)
+            response.raise_for_status()
+            self.logger.info(f"GET request to {url} successful. Response: {response.json()}")
+            return response
+        except requests.exceptions.RequestException as e:
+            self.logger.error(f"GET request to {url} failed: {e}")
+            return None
+        except Exception as e:
+            self.logger.error(f"An unexpected error occurred during GET request: {e}")
+            return None
+        
+
 
         
         
