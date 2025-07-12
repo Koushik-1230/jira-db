@@ -15,7 +15,6 @@ class APIClient:
     This class provides a thread-safe interface for making HTTP requests with
     automatic retry capabilities and proper connection pooling.
     """
-    
     def __init__(self, max_retries=5, backoff_factor=1, concurrency=10):
         """
         Initialize the API client.
