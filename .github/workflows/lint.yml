@@ -17,4 +17,6 @@ jobs:
           pip install -r requirements.txt
 
       - name: ✅ Run pylint
-        uses: davidslusser/actions_python_pylint@v1.0.0
+        run: |
+          pylint .
+
