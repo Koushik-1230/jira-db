@@ -8,7 +8,6 @@ jobs:
   Run_Code:
       name: Run Code
       runs-on: ubuntu-latest
-      needs: bandit
 
       env:
         JIRA_BASE_URL: ${{ secrets.JIRA_URL }}
