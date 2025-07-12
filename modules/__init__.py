@@ -1,5 +1,5 @@
 from .get_issues import get_issues
-from ..utils.api_client import APIClient
+from utils.api_client import APIClient
 
 
 class JiraDB:
