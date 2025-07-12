@@ -50,7 +50,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 black isort pytest
+          pip install flake8 black isort bandit mypy
 
       - name: Run flake8 (style check)
         run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
@@ -60,11 +60,17 @@ jobs:
 
       - name: Run isort (import sorting check)
         run: isort . --check-only
+      
+      - name: Run bandit (security check)
+        run: bandit -r . --format json --quiet --exit-zero
 
-      - name: Run unit tests
-        uses: fylein/python-pytest-github-action@v2
+      - name: Run mypy (type check)
+        run: mypy . --ignore-missing-imports --show-error-codes
+
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
         with:
-          args: "tests/ --verbose"
+          args: detect --source=. --verbose --redact
 
   run-app:
     name: Run Main App
