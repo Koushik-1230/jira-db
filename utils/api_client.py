@@ -62,7 +62,7 @@ class APIClient:
         try:
             response = requests.get(url, headers=headers, params=params, timeout=self.default_timeout)
             response.raise_for_status()
-            self.logger.info(f"GET request to {url} successful. Response: {response.json()}")
+            self.logger.info(f"GET request to {url} successfully returned status code {response.status_code}.")
             return response
         except requests.exceptions.RequestException as e:
             self.logger.error(f"GET request to {url} failed: {e}")
