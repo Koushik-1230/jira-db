@@ -4,7 +4,9 @@ on:
   push:
     branches:
       - main
-
+  pull_request:
+    branches:
+      - main
 
 jobs:
   security-and-quality:
@@ -57,20 +59,11 @@ jobs:
       - name: Run unit tests
         run: |
           if [ -d "tests" ]; then
-            pytest tests/ -v --cov=. --cov-report=xml --cov-report=term-missing
+            pytest tests/ -v --cov=. --cov-report=term-missing
           else
             echo "No tests directory found, skipping unit tests"
           fi
         continue-on-error: true
-
-      - name: Upload coverage to Codecov
-        if: success()
-        uses: codecov/codecov-action@v4
-        with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
 
       - name: Upload security reports
         uses: actions/upload-artifact@v4
