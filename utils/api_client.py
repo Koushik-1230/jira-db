@@ -54,15 +54,14 @@ class APIClient:
         Make a GET request with retry logic.
         
         Args:
-            request_to (str): The base URL for the request.
-            endpoint (str): The specific endpoint to call.
             *args: Positional arguments for the request.
             **kwargs: Keyword arguments for the request.
         
         Returns:
             Response object from the requests library.
         """
-        self.logger.info(f"{args} {kwargs}")
+        self.logger.info(f"Args values: {list(args)}; Kwargs values: {list(kwargs.values())}")
+
         
         
 
