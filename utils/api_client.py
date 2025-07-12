@@ -56,7 +56,7 @@ class APIClient:
             headers = self.jira_headers
         else:
             raise ValueError("Unsupported request_to value. Only 'jira' is supported.")
-        
+        self.logger.info(f"Making GET request to {url} with headers: {headers} and params: {params}")
         try:
             response = requests.get(url, headers=headers, params=params, timeout=self.default_timeout)
             response.raise_for_status()
