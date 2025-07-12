@@ -29,5 +29,5 @@ jobs:
           pip install requests
 
       - name: Run app.py
-        working-directory: jira-db
+        working-directory: .
         run: python main.py
