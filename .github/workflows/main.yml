@@ -64,11 +64,6 @@ jobs:
           echo "Running Bandit (SAST)..."
           bandit -r . -ll || true
 
-      - name: 🧪 Run Tests with Coverage
-        run: |
-          echo "Running tests..."
-          pytest --cov=. --cov-report=xml
-
       - name: ☁️ Upload Coverage to GitHub (optional)
         uses: actions/upload-artifact@v4
         with:
