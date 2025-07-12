@@ -5,9 +5,54 @@ on:
     branches: [ main ]
 
 jobs:
-  lint_format_static_analysis:
-    name: 🧪 Lint, Format Check and Static Analysis
+  CodeQL_Analysis:
+    name: Analyze (${{ matrix.language }})
+
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: actions
+          build-mode: none
+        - language: python
+          build-mode: none
+        
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v3
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+        queries : +security-extended,security-and-quality
+    - if: matrix.build-mode == 'manual'
+      shell: bash
+      run: |
+        echo 'If you are using a "manual" build mode for one or more of the' \
+          'languages you are analyzing, replace this with the commands to build' \
+          'your code, for example:'
+        echo '  make bootstrap'
+        echo '  make release'
+        exit 1
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v3
+      with:
+        category: "/language:${{matrix.language}}"
+
+  Lint:
+    name: Lint Check
     runs-on: ubuntu-latest
+    needs: CodeQL_Analysis
 
     steps:
       - name: ⬇️ Checkout code
@@ -22,26 +67,68 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install flake8 black bandit 
+          pip install flake8
 
       - name: ✅ Lint with flake8
         run: |
           echo "Running flake8..."
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+  
+  Format_Check:
+    name: Format Check
+    runs-on: ubuntu-latest
+    needs: Lint
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install black
 
       - name: 🎨 Format check with black
         run: |
           echo "Checking formatting with black..."
           black . --check
+  
+  Static_Analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    needs: Format_Check
+
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install bandit
 
       - name: 🔒 Static Analysis with Bandit
         run: |
           echo "Running Bandit (SAST)..."
           bandit -r . -ll || true
+
+
   Run_Code:
       name: Run Code
       runs-on: ubuntu-latest
-      needs: lint_format_static_analysis
+      needs: Static_Analysis
 
       env:
         JIRA_BASE_URL: ${{ secrets.JIRA_URL }}
