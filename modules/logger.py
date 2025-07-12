@@ -17,7 +17,7 @@ class Logger:
     
     This class creates timestamped log files and automatically removes
     old log files when the maximum number of files is exceeded.
-    """  
+    """
     def __init__(self, log_dir="Logs", max_log_files=5):
         """
         Initialize the Logger instance.
