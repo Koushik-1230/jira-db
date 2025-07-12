@@ -1,3 +1,10 @@
+"""
+Logger module for managing application logs with automatic cleanup.
+
+This module provides a Logger class that creates timestamped log files
+and automatically manages log file retention by deleting old files.
+"""
+
 import glob
 import logging
 import os
@@ -5,8 +12,21 @@ from datetime import datetime
 
 
 class Logger:
+    """
+    A logger class that manages log files with automatic cleanup.
+    
+    This class creates timestamped log files and automatically removes
+    old log files when the maximum number of files is exceeded.
+    """
+    
     def __init__(self, log_dir="Logs", max_log_files=5):
-
+        """
+        Initialize the Logger instance.
+        
+        Args:
+            log_dir (str): Directory to store log files. Defaults to "Logs".
+            max_log_files (int): Maximum number of log files to keep. Defaults to 5.
+        """
         self.log_dir = log_dir
         self.max_log_files = max_log_files
 
@@ -42,16 +62,20 @@ class Logger:
         if len(log_files) > self.max_log_files:
             for old_log in log_files[: len(log_files) - self.max_log_files]:
                 os.remove(old_log)
-                logging.info(f"Deleted old log file: {old_log}")
+                logging.info("Deleted old log file: %s", old_log)
 
     def info(self, message):
+        """Log an info message."""
         logging.info(message)
 
     def warning(self, message):
+        """Log a warning message."""
         logging.warning(message)
 
     def error(self, message):
+        """Log an error message."""
         logging.error(message)
 
     def debug(self, message):
+        """Log a debug message."""
         logging.debug(message)
