@@ -1,5 +1,9 @@
 from modules import logger, api_client
 
+username = "admin"
+password = "supersecret123"
+
+
 def main():
     log = logger.Logger()
     client = api_client.APIClient(log)
