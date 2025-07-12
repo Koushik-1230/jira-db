@@ -31,7 +31,7 @@ class APIClient:
             }
         if not self.jira_url or not self.jira_email or not self.jira_token:
             raise ValueError("JIRA_URL, JIRA_EMAIL, and JIRA_TOKEN environment variables must be set.")
-        self.logger.info("API Client initialized with JIRA URL: %s", self.jira_url)
+        self.logger.info(f"API Client initialized with JIRA URL: {self.jira_url}")
     
     def make_request(self, request_to, endpoint):
         """
