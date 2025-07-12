@@ -1,7 +1,7 @@
 """ Get all issue from Jira API Paginated
 """
 
-def get_issues(request_to, client):
+def get_issues(client):
     """
     Get issues from Jira API with pagination.
     
@@ -26,8 +26,8 @@ def get_issues(request_to, client):
         
         response = client.get_request("Jira", "rest/api/2/issue", params=params)
         
-        if response.status_code != 200:
-            raise Exception(f"Failed to fetch issues: {response.text}")
+        if not response:
+            raise Exception(f"Failed to fetch issues: {response}")
         
         data = response.json()
         issues.extend(data.get("issues", []))
