@@ -58,13 +58,13 @@ class APIClient:
             response = None
             method = method.lower()
             if method == "get":
-                response = requests.get(url, headers=headers, params=params)
+                response = requests.get(url, headers=headers, params=params, timeout=10)
             elif method == "post":
-                response = requests.post(url, headers=headers, json=data, files=files)
+                response = requests.post(url, headers=headers, json=data, files=files, timeout=10)
             elif method == "put":
-                response = requests.put(url, headers=headers, json=data)
+                response = requests.put(url, headers=headers, json=data, timeout=10)
             elif method == "delete":
-                response = requests.delete(url, headers=headers)
+                response = requests.delete(url, headers=headers, timeout=10)
             else:
                 self.logger.error(f"Unsupported HTTP method: {method}")
                 return None, "Unsupported HTTP method"
