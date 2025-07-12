@@ -22,9 +22,9 @@ class APIClient:
             logger (Logger): Logger instance for logging API requests and responses.
         """
         self.logger = logger
-        self.jira_url = os.getenv("JIRA_URL")
+        self.jira_url = os.getenv("JIRA_BASE_URL")
         self.jira_email = os.getenv("JIRA_EMAIL")
-        self.jira_token = os.getenv("JIRA_TOKEN")
+        self.jira_token = os.getenv("JIRA_API_TOKEN")
         self.jira_headers = {
             "Content-Type": "application/json",
             "Authorization": f"Basic {base64.b64encode(f"{self.jira_email}:{self.jira_token}".encode()).decode()}",
