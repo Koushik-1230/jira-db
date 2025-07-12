@@ -13,29 +13,28 @@ def get_issues(client):
         list: A list of issues retrieved from the API.
     """
     issues = []
-    start_at = 0
-    max_results = 50  # Adjust as needed
+    nextPageToken = None
+    max_results = 500 
 
     while True:
         params = {
-            "startAt": start_at,
             "maxResults": max_results,
             "fields": "summary,description,status",
             "jql": "ORDER BY created DESC"
         }
+        if nextPageToken:
+            params["nextPageToken"] = nextPageToken
         
-        response = client.get_request("Jira", "rest/api/2/issue", params=params)
+        response = client.get_request("Jira", "/rest/api/3/search/jql", params=params)
         
         if not response:
             raise Exception(f"Failed to fetch issues: {response}")
         
         data = response.json()
         issues.extend(data.get("issues", []))
-        
-        if len(data.get("issues", [])) < max_results:
+        nextPageToken = data.get("nextPageToken")
+        if not nextPageToken:
             break
-        
-        start_at += max_results
 
     return issues
     
