@@ -11,8 +11,6 @@ on:
 jobs:
   run-jira-app:
     runs-on: ubuntu-latest
-    needs: [security-and-quality, dependency-check]
-    if: success()
     
     env:
       JIRA_BASE_URL: ${{ secrets.JIRA_URL }}
