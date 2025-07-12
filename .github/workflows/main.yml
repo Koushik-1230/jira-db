@@ -1,68 +1,73 @@
-name: Run CI with CodeQL
+name: SAST + Lint + Test + Run App
 
 on:
-  workflow_dispatch:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
-  schedule:
-    - cron: '18 22 * * 2'
+    branches: [main]
 
 jobs:
-  analyze:
-    name: Analyze (${{ matrix.language }})
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+  codeql-analysis:
+    name: CodeQL SAST
+    runs-on: ubuntu-latest
     permissions:
       security-events: write
-      packages: read
       actions: read
       contents: read
-
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - language: actions
-            build-mode: none
-          - language: python
-            build-mode: none
+        language: [python]
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
           languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
-          queries: +security-extended,security-and-quality
-          debug: true
-
-      - if: matrix.build-mode == 'manual'
-        shell: bash
-        run: |
-          echo 'If you are using a "manual" build mode for one or more of the' \
-            'languages you are analyzing, replace this with the commands to build' \
-            'your code, for example:'
-          echo '  make bootstrap'
-          echo '  make release'
-          exit 1
+          queries: +./codeql-custom-queries
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{matrix.language}}"
 
-  run-jira-app:
-    name: Run JIRA App
-    needs: analyze
+  lint-and-test:
+    name: Lint & Unit Tests
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
+    needs: codeql-analysis
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install flake8 black isort pytest
+
+      - name: Run flake8 (style check)
+        run: flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Run black (format check)
+        run: black . --check
+
+      - name: Run isort (import sorting check)
+        run: isort . --check-only
+
+      - name: Run unit tests
+        run: pytest tests/
+
+  run-app:
+    name: Run Main App
+    runs-on: ubuntu-latest
+    needs: lint-and-test
 
     env:
       JIRA_BASE_URL: ${{ secrets.JIRA_URL }}
@@ -76,14 +81,12 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13'
-        
+          python-version: '3.11'
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install requests
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install -r requirements.txt
 
-      - name: Run app.py
-        working-directory: .
-        run: python main.py
+      - name: Run app
+        run: python app/main.py
