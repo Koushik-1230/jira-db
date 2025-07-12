@@ -62,7 +62,9 @@ jobs:
         run: isort . --check-only
 
       - name: Run unit tests
-        run: pytest tests/
+        uses: fylein/python-pytest-github-action@v2
+        with:
+          args: "tests/ --verbose"
 
   run-app:
     name: Run Main App
