@@ -1,5 +1,3 @@
-import requests
-
 from modules import api_client, logger
 
 
