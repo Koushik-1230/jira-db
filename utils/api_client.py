@@ -60,7 +60,10 @@ class APIClient:
         Returns:
             Response object from the requests library.
         """
-        self.logger.info(f"Args values: {list(args)}; Kwargs values: {list(kwargs.values())}")
+        request_to = list(args)[0]
+        endpoint = list(args)[1]
+        params = kwargs.get("params", {})
+        self.logger.info(f"GET request to {request_to} at {endpoint} with params: {params}")
 
         
         
