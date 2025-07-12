@@ -23,7 +23,7 @@ def get_issues(client):
             continue
         client.logger.info(f"Fetching issues for project: {project_key}") 
         nextPageToken = None
-        max_results = 500
+        max_results = 10
 
         while True:
             params = {
