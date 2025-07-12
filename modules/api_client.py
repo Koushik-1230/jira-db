@@ -1,80 +1,96 @@
-"""This module defines the APIClient for interacting with the Jira REST API."""
-
-import base64
-import os
-import time
 import requests
+from requests.adapters import HTTPAdapter, Retry
+from threading import Lock
+from packaging import version
 
 
 class APIClient:
-    """Handles requests to the Jira API using provided credentials."""
+    def __init__(self, max_retries=5, backoff_factor=1, concurrency=10):
+        self.max_retries = max_retries
+        self.backoff_factor = backoff_factor
+        self.concurrency = concurrency
+        self.session = self._create_session()
+        self.lock = Lock()
 
-    def __init__(self, logger):
-        """Initializes the APIClient with Jira credentials and sets up headers."""
-        self.logger = logger
-        self.jira_url = os.getenv("JIRA_BASE_URL")
-        self.jira_email = os.getenv("JIRA_EMAIL")
-        self.jira_token = os.getenv("JIRA_API_TOKEN")
-        if not all([self.jira_url, self.jira_email, self.jira_token]):
-            raise ValueError(
-                "JIRA_URL, JIRA_EMAIL, and JIRA_TOKEN must be set in environment variables."
-            )
-        credentials = f"{self.jira_email}:{self.jira_token}"
-        encoded_credentials = base64.b64encode(credentials.encode()).decode()
-        self.jira_headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Basic {encoded_credentials}",
+    def _create_session(self):
+        # Define the HTTP methods to retry
+        retry_methods = ["GET", "POST", "PUT", "DELETE"]
+
+        # Check requests version to use appropriate parameter name
+        requests_version = version.parse(requests.__version__)
+        retry_params = {
+            'total': self.max_retries,
+            'backoff_factor': self.backoff_factor,
+            'status_forcelist': [429, 500, 502, 503, 504],
         }
-        self.logger.info("APIClient initialized with JIRA credentials.")
 
-    def send_request(self, request_to, endpoint, method,
-                     data=None):
-        """
-        Sends an HTTP request to the specified API.
-
-        Args:
-            request_to (str): Target system (e.g., "jira").
-            endpoint (str): API endpoint path.
-            method (str): HTTP method ("GET", "POST", "PUT", "DELETE").
-            data (dict, optional): JSON payload.
-            files (dict, optional): Files to upload.
-            params (dict, optional): URL parameters.
-
-        Returns:
-            tuple: (response JSON or None, message string)
-        """
-        time.sleep(1)  # To avoid rate limiting
-        url = None
-        headers = None
-
-        if request_to == "jira":
-            url = f"{self.jira_url}{endpoint}"
-            headers = self.jira_headers
+        # Use appropriate parameter name based on version
+        if requests_version >= version.parse('2.26.0'):
+            retry_params['allowed_methods'] = retry_methods
         else:
-            self.logger.error(f"Unknown request target: {request_to}")
-            return None, "Unknown request target"
+            retry_params['method_whitelist'] = retry_methods
 
+        retry_strategy = Retry(**retry_params)
+        adapter = HTTPAdapter(max_retries=retry_strategy, pool_maxsize=self.concurrency)
+        session = requests.Session()
+        session.mount("https://", adapter)
+        session.mount("http://", adapter)
+        return session
+
+    def get_request(self, url, headers, params=None):
         try:
-            response = None
-            method = method.lower()
-            if method == "get":
-                response = requests.get(url, headers=headers, timeout=10)
-            elif method == "post":
-                response = requests.post(url, headers=headers, json=data, timeout=10)
-            elif method == "put":
-                response = requests.put(url, headers=headers, json=data, timeout=10)
-            elif method == "delete":
-                response = requests.delete(url, headers=headers, timeout=10)
+            with self.lock:
+                response = self.session.get(url, headers=headers, params=params)
+            status_code = response.status_code
+            if status_code in [200, 201, 204]:
+                return response.json() if response.text else {}, status_code, "successful"
             else:
-                self.logger.error(f"Unsupported HTTP method: {method}")
-                return None, "Unsupported HTTP method"
+                return response.json() if response.text else {}, status_code, "failed"
+        except Exception as e:
+            return {"error": str(e)}, 500, "failed"
 
-            response.raise_for_status()
-            self.logger.info(
-                f"Request to {url} successful with status code {response.status_code}."
-            )
-            return response.json(), "Success"
+    def post_request(self, url, headers, data=None, files=None):
+        try:
+            with self.lock:
+                if files:
+                    response = self.session.post(url, headers=headers, files=files)
+                else:
+                    response = self.session.post(url, json=data, headers=headers)
+            status_code = response.status_code
+            if status_code in [200, 201, 204]:
+                return response.json() if response.text else {}, status_code, "successful"
+            else:
+                return response.json() if response.text else {}, status_code, "failed"
+        except Exception as e:
+            return {"error": str(e)}, 500, "failed"
 
-        except requests.exceptions.RequestException as e:
-            self.logger.error(f"Request to {url} failed: {e}")
-            return None, str(e)
+    def put_request(self, url, headers, data=None, files=None):
+        try:
+            with self.lock:
+                if files:
+                    response = self.session.put(url, headers=headers, files=files)
+                else:
+                    response = self.session.put(url, json=data, headers=headers)
+            status_code = response.status_code
+            if status_code in [200, 201, 204]:
+                return response.json() if response.text else {}, status_code, "successful"
+            else:
+                return response.json() if response.text else {}, status_code, "failed"
+        except Exception as e:
+            return {"error": str(e)}, 500, "failed"
+
+    def delete_request(self, url, headers):
+        try:
+            with self.lock:
+                response = self.session.delete(url, headers=headers)
+            status_code = response.status_code
+            if status_code in [200, 201, 204]:
+                return response.json() if response.text else {}, status_code, "successful"
+            else:
+                return response.json() if response.text else {}, status_code, "failed"
+        except Exception as e:
+            return {"error": str(e)}, 500, "failed"
+
+    def close(self):
+        self.session.close()
+
