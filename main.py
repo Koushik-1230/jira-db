@@ -1,6 +1,6 @@
 """This module initializes and starts the Jira API client."""
 
-from modules import api_client, logger
+from utils import api_client, logger
 
 def main():
     """Main entry point to start the Jira API client."""
